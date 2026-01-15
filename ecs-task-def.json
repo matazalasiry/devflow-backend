@@ -1,0 +1,35 @@
+{
+  "family": "devflow-backend-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+
+  "executionRoleArn": "arn:aws:iam::513158236996:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::513158236996:role/ecsTaskExecutionRole",
+
+  "containerDefinitions": [
+    {
+      "name": "devflow-backend",
+      "image": "<IMAGE_URI>",
+      "essential": true,
+
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/devflow-backend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-name: CI - Build and Push to ECR
+name: CI - Build, Push to ECR and Deploy to ECS
 
 on:
   push:
@@ -8,6 +8,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ECR_REPO: devflow-backend
+      ECS_CLUSTER: devflow-cluster
+      ECS_SERVICE: devflow-backend-task-service-o9n9a12q
+      TASK_FAMILY: devflow-backend-task
 
     steps:
       - name: Checkout code
@@ -30,8 +37,28 @@ jobs:
       - name: Tag Docker image
         run: |
           docker tag devflow-backend:latest \
-          513158236996.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/devflow-backend:latest
+          513158236996.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
 
       - name: Push Docker image to ECR
         run: |
-          docker push 513158236996.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/devflow-backend:latest
+          docker push 513158236996.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
+
+      - name: Render task definition
+        id: render-task-def
+        run: |
+          IMAGE_URI=513158236996.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
+          sed "s|<IMAGE_URI>|$IMAGE_URI|g" ecs-task-def.json > ecs-task-def-rendered.json
+
+      - name: Register ECS task definition
+        id: register-task-def
+        run: |
+          aws ecs register-task-definition \
+            --cli-input-json file://ecs-task-def-rendered.json
+
+      - name: Update ECS service
+        run: |
+          aws ecs update-service \
+            --cluster ${ECS_CLUSTER} \
+            --service ${ECS_SERVICE} \
+            --task-definition ${TASK_FAMILY} \
+            --force-new-deployment
