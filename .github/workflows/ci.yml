@@ -1,4 +1,4 @@
-name: CI - Build, Push to ECR and Deploy to ECS (Dev)
+name: CI - Build, Push to ECR and Deploy to ECS (Live)
 
 on:
   push:
