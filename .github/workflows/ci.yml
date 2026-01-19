@@ -14,8 +14,8 @@ jobs:
       contents: read
 
     env:
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      AWS_REGION: us-east-1
+      AWS_ACCOUNT_ID: 513158236996
       ECR_REPO: devflow-backend
       ECS_CLUSTER: devflow-cluster
       ECS_SERVICE: devflow-backend-task-service-o9n9a12q
@@ -29,7 +29,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::513158236996:role/devflow-github-oidc-dev-role
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-east-1
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -41,15 +41,15 @@ jobs:
       - name: Tag Docker image
         run: |
           docker tag devflow-backend:latest \
-          ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
+          513158236996.dkr.ecr.us-east-1.amazonaws.com/devflow-backend:latest
 
       - name: Push Docker image to ECR
         run: |
-          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
+          docker push 513158236996.dkr.ecr.us-east-1.amazonaws.com/devflow-backend:latest
 
       - name: Render task definition
         run: |
-          IMAGE_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
+          IMAGE_URI=513158236996.dkr.ecr.us-east-1.amazonaws.com/devflow-backend:latest
           sed "s|<IMAGE_URI>|$IMAGE_URI|g" ecs-task-def.json > ecs-task-def-rendered.json
 
       - name: Register ECS task definition
@@ -60,7 +60,7 @@ jobs:
       - name: Update ECS service
         run: |
           aws ecs update-service \
-            --cluster ${ECS_CLUSTER} \
-            --service ${ECS_SERVICE} \
-            --task-definition ${TASK_FAMILY} \
+            --cluster devflow-cluster \
+            --service devflow-backend-task-service-o9n9a12q \
+            --task-definition devflow-backend-task \
             --force-new-deployment
